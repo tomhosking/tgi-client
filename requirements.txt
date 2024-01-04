@@ -2,3 +2,5 @@ text-generation
 tqdm
 backoff
 transformers
+jsonlines
+jinja2

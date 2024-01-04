@@ -8,18 +8,12 @@ def main():
 
     args = parse_args()
 
-    # with jsonlines.open(f'./inputs.jsonl') as reader:
-    #     prompts = list(reader)
-
-    prompts = [
-        'Can you give me a recipe for a risotto?',
-        'What is the meaning of life?'
-    ]
-
+    with jsonlines.open(f'{args.input}') as reader:
+        prompts = list(reader)
     
-    tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2")
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
 
-    chat_turns = [[{"role": "user", "content": prompt}] for prompt in prompts]
+    chat_turns = [[{"role": "user", "content": prompt['prompt']}] for prompt in prompts]
 
     formatted_prompts = [tokenizer.apply_chat_template(chat, tokenize=False) for chat in chat_turns]
 
@@ -31,7 +25,7 @@ def main():
 
     responses = job.run()
 
-    with jsonlines.open(f'./output.jsonl','w') as writer:
+    with jsonlines.open(f'{args.output}','w') as writer:
         writer.write_all([{'response': resp.generated_text} for resp in responses])
 
 
