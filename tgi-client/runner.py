@@ -13,9 +13,9 @@ def main():
     
     tokenizer = AutoTokenizer.from_pretrained(args.model)
 
-    chat_turns = [[{"role": "user", "content": prompt['prompt']}] for prompt in prompts]
+    chat_turns = [{'turns': [{"role": "user", "content": prompt['prompt']}], 'orig': prompt} for prompt in prompts]
 
-    formatted_prompts = [tokenizer.apply_chat_template(chat, tokenize=False) for chat in chat_turns]
+    formatted_prompts = [{'input': tokenizer.apply_chat_template(chat['turns'], tokenize=False), 'orig': chat['orig']} for chat in chat_turns]
 
 
 
@@ -26,7 +26,7 @@ def main():
     responses = job.run()
 
     with jsonlines.open(f'{args.output}','w') as writer:
-        writer.write_all([{'response': resp.generated_text} for resp in responses])
+        writer.write_all([{'response': resp['response'].generated_text, **resp['orig']} for resp in responses])
 
 
 if __name__ == "__main__":

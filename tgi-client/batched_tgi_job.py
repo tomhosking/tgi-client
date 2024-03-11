@@ -14,7 +14,7 @@ class TGIBatch:
     temperature: float
     bsz: int
 
-    def __init__(self, endpoint: str, prompts: list[str], silent: bool=False, max_new_tokens: int=128, temperature: float=0.7, bsz: int = 64) -> None:
+    def __init__(self, endpoint: str, prompts: list[str], silent: bool=False, max_new_tokens: int=256, temperature: float=0.7, bsz: int = 16) -> None:
         self.endpoint = endpoint
         self.prompts = prompts
         self.silent = silent
@@ -34,6 +34,7 @@ class TGIBatch:
         if resp.status_code != 200:
             print(resp.status_code)
             raise Exception('Failed to connect to endpoint, status {:}'.format(resp.status_code))
+        print("..server is up!")
         return payload
         
         
@@ -42,8 +43,9 @@ class TGIBatch:
     def run(self):
         client = Client(self.endpoint, timeout=600)
 
-        def generate_fn(text):
-            return client.generate(text,max_new_tokens=self.max_new_tokens, temperature=self.temperature)
+        def generate_fn(example):
+            # TODO: Capture response metadata/errors
+            return {'response': client.generate(example['input'],max_new_tokens=self.max_new_tokens, temperature=self.temperature), **example}
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.bsz) as executor:
             self.responses = list(tqdm(executor.map(generate_fn,self.prompts), total=len(self.prompts), disable=self.silent))
